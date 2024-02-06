@@ -4,5 +4,5 @@
 
 # the command executed in order to set a wallpaper on the desktop.
 # a single argument which is the file path for it.
-set_wp_cmd = "set_wallpaper.sh"
+SET_WP_CMD = "set_wallpaper.sh"
 
