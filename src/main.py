@@ -24,3 +24,5 @@ def main():
     # run application
     app.run(config['HOSTNAME'], config['PORT'])
 
+if __name__ == "__main__":
+    main()
