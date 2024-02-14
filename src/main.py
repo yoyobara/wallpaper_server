@@ -8,6 +8,16 @@ import tomllib
 DATA_DIR = platformdirs.user_data_dir("wpserver")
 CONFIG_FILE = os.path.join(DATA_DIR, 'config.toml')
 
+# will be overriden by custom toml
+config = {
+    'HOSTNAME': '0.0.0.0',
+    'PORT': 8000,
+    'SET_WP_CMD': 'set_wallpaper'
+}
+
+def set_wallpaper_to_desktop(uri: str):
+    os.system(f"{config['SET_WP_CMD']} {uri}")
+
 class WallpaperManager:
     WALLPAPERS_DIR = os.path.join(DATA_DIR, 'wallpapers')
 
@@ -29,24 +39,26 @@ class WallpaperManager:
         if not self.wallpapers:
             return None
 
-        wp = random.choice(self.wallpapers)
+        wp = random.choice(list(self.wallpapers))
         return pathlib.Path(self.WALLPAPERS_DIR, wp).as_uri()
 
 
 app = flask.Flask(__name__)
 manager = WallpaperManager()
 
+
+
 @app.route('/set_random', methods=['POST'])
 def set_random():
-    return manager.get_random_wallpaper_uri()
+    rnd_uri = manager.get_random_wallpaper_uri()
+
+    if rnd_uri is None:
+        return flask.jsonify(success=False, uri=None)
+    else:
+        set_wallpaper_to_desktop(rnd_uri)
+        return flask.jsonify(success=True, uri=rnd_uri)
 
 def main():
-    config = {
-        'HOSTNAME': '0.0.0.0',
-        'PORT': 8000,
-        'SET_WP_CMD': 'set_wallpaper.sh'
-    }
-
     # override default config with user specifics
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'r') as f:
