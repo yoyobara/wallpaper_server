@@ -1,4 +1,6 @@
 import flask
+import pathlib
+import random
 import os
 import platformdirs
 import tomllib
@@ -6,13 +8,43 @@ import tomllib
 DATA_DIR = platformdirs.user_data_dir("wpserver")
 CONFIG_FILE = os.path.join(DATA_DIR, 'config.toml')
 
+class WallpaperManager:
+    WALLPAPERS_DIR = os.path.join(DATA_DIR, 'wallpapers')
+
+    def __init__(self) -> None:
+
+        if not os.path.exists(self.WALLPAPERS_DIR):
+            os.makedirs(self.WALLPAPERS_DIR, exist_ok=True)
+
+        self.wallpapers: set = set()
+        self.load_wallpapers()
+
+    def load_wallpapers(self):
+        if not os.path.exists(self.WALLPAPERS_DIR):
+            os.mkdir(self.WALLPAPERS_DIR)
+
+        self.wallpapers.update(os.listdir(self.WALLPAPERS_DIR))
+
+    def get_random_wallpaper_uri(self) -> str | None:
+        if not self.wallpapers:
+            return None
+
+        wp = random.choice(self.wallpapers)
+        return pathlib.Path(self.WALLPAPERS_DIR, wp).as_uri()
+
+
 app = flask.Flask(__name__)
+manager = WallpaperManager()
+
+@app.route('/set_random', methods=['POST'])
+def set_random():
+    return manager.get_random_wallpaper_uri()
 
 def main():
     config = {
         'HOSTNAME': '0.0.0.0',
         'PORT': 8000,
-        'SET_WP_CMD': 'echo "change me in config.toml"'
+        'SET_WP_CMD': 'set_wallpaper.sh'
     }
 
     # override default config with user specifics
